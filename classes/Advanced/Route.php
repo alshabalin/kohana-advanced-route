@@ -74,13 +74,14 @@ class Advanced_Route extends Kohana_Route {
 
   protected static $controller_stack = [];
   protected static $directory_stack = [];
+  protected static $regex_stack = [];
 
   public static function resources($resource, Closure $closure = NULL)
   {
     $new   = 'new';
     $edit  = 'edit';
     $param = 'id';
-    // $regex = [];
+    $regex = [];
 
     $directory = NULL;
 
@@ -97,7 +98,7 @@ class Advanced_Route extends Kohana_Route {
       empty($options['new'])         || $new = $options['new'];
       empty($options['edit'])        || $edit = $options['edit'];
       empty($options['param'])       || $param = $options['param'];
-     // empty($options['regex'])       || $regex = $options['regex'];
+      empty($options['regex'])       || $regex = $options['regex'];
       empty($options['path'])        || $path = ltrim($options['path'], '/');
 
       if ( ! empty($options['only']))
@@ -151,19 +152,21 @@ class Advanced_Route extends Kohana_Route {
     {
       array_unshift(static::$controller_stack, $controller);
       array_unshift(static::$directory_stack, $directory);
+      array_unshift(static::$regex_stack, $regex);
       static::$prefixes[] = [ $one . '_' , [ $path . '<' . $one . '_' . $param . '>/' , $path . '<' . $param . '>/' ], '' ];
       $closure();
       array_pop(static::$prefixes);
       array_shift(static::$controller_stack);
       array_shift(static::$directory_stack);
+      array_shift(static::$regex_stack);
     }
 
-    $_edit    && Route::set('edit_' . $prefix_name . $one,     $prefix_path . $path . '<' . $param . '>/edit' . $f)->method('GET')->defaults(['directory' => $directory, 'controller' => $controller, 'action' => 'edit']);
-    $_show    && Route::set($prefix_name . $one,               $prefix_path . $path . '<' . $param . '>' . $f)     ->method('GET')->defaults(['directory' => $directory, 'controller' => $controller, 'action' => 'show']);
-    $_create  && Route::set('create_' . $prefix_name . $one,   rtrim($prefix_path . $path, '/') . $f)  ->method('POST')->defaults(['directory' => $directory, 'controller' => $controller, 'action' => 'create']);
-    $_update  && Route::set('update_' . $prefix_name . $one,   $prefix_path . $path . '<' . $param . '>' . $f)     ->method(['PUT', 'PATCH'])->defaults(['directory' => $directory, 'controller' => $controller, 'action' => 'update']);
-    $_destroy && Route::set('destroy_' . $prefix_name . $one,  $prefix_path . $path . '<' . $param . '>' . $f)     ->method('DELETE')->defaults(['directory' => $directory, 'controller' => $controller, 'action' => 'destroy']);
-    $_index   && Route::set($prefix_name . $as,                rtrim($prefix_path . $path, '/') . $f)  ->method('GET')->defaults(['directory' => $directory, 'controller' => $controller, 'action' => 'index']);
+    $_edit    && Route::set('edit_' . $prefix_name . $one,     $prefix_path . $path . '<' . $param . '>/edit' . $f, $regex)->method('GET')->defaults(['directory' => $directory, 'controller' => $controller, 'action' => 'edit']);
+    $_show    && Route::set($prefix_name . $one,               $prefix_path . $path . '<' . $param . '>' . $f,      $regex)->method('GET')->defaults(['directory' => $directory, 'controller' => $controller, 'action' => 'show']);
+    $_create  && Route::set('create_' . $prefix_name . $one,   rtrim($prefix_path . $path, '/') . $f,               $regex)->method('POST')->defaults(['directory' => $directory, 'controller' => $controller, 'action' => 'create']);
+    $_update  && Route::set('update_' . $prefix_name . $one,   $prefix_path . $path . '<' . $param . '>' . $f,      $regex)->method(['PUT', 'PATCH'])->defaults(['directory' => $directory, 'controller' => $controller, 'action' => 'update']);
+    $_destroy && Route::set('destroy_' . $prefix_name . $one,  $prefix_path . $path . '<' . $param . '>' . $f,      $regex)->method('DELETE')->defaults(['directory' => $directory, 'controller' => $controller, 'action' => 'destroy']);
+    $_index   && Route::set($prefix_name . $as,                rtrim($prefix_path . $path, '/') . $f,               $regex)->method('GET')->defaults(['directory' => $directory, 'controller' => $controller, 'action' => 'index']);
   }
 
 
@@ -172,7 +175,7 @@ class Advanced_Route extends Kohana_Route {
     $new   = 'new';
     $edit  = 'edit';
     $param = 'id';
-    // $regex = [];
+    $regex = [];
 
     $directory = NULL;
 
@@ -189,6 +192,7 @@ class Advanced_Route extends Kohana_Route {
       empty($options['new'])         || $new = $options['new'];
       empty($options['edit'])        || $edit = $options['edit'];
       empty($options['param'])       || $param = $options['param'];
+      empty($options['regex'])       || $regex = $options['regex'];
       empty($options['path'])        || $path = ltrim($options['path'], '/');
       if ( ! empty($options['only']))
       {
@@ -227,24 +231,26 @@ class Advanced_Route extends Kohana_Route {
       }
     }
 
-    $_edit    && Route::set('edit_' . $prefix_name . $as,     $prefix_path . $path . 'edit' . $f)     ->method('GET')->defaults(['controller' => $controller, 'action' => 'edit']);
-    $_new     && Route::set('new_' . $prefix_name . $as,      $prefix_path . $path . 'new' . $f)      ->method('GET')->defaults(['controller' => $controller, 'action' => 'new']);
+    $_edit    && Route::set('edit_' . $prefix_name . $as,     $prefix_path . $path . 'edit' . $f, $regex)->method('GET')->defaults(['controller' => $controller, 'action' => 'edit']);
+    $_new     && Route::set('new_' . $prefix_name . $as,      $prefix_path . $path . 'new' . $f,  $regex)->method('GET')->defaults(['controller' => $controller, 'action' => 'new']);
 
     if ($closure !== NULL)
     {
       array_unshift(static::$controller_stack, $controller);
       array_unshift(static::$directory_stack, '');
+      array_unshift(static::$regex_stack, $regex);
       static::$prefixes[] = [ $as . '_' , $path, NULL ];
       $closure();
       array_pop(static::$prefixes);
       array_shift(static::$controller_stack);
       array_shift(static::$directory_stack);
+      array_shift(static::$regex_stack);
     }
 
-    $_create  && Route::set('create_' . $prefix_name . $as,   rtrim($prefix_path . $path, '/') . $f)  ->method('POST')->defaults(['controller' => $controller, 'action' => 'create']);
-    $_update  && Route::set('update_' . $prefix_name . $as,   rtrim($prefix_path . $path, '/') . $f)  ->method(['PUT', 'PATCH'])->defaults(['controller' => $controller, 'action' => 'update']);
-    $_destroy && Route::set('destroy_' . $prefix_name . $as,  rtrim($prefix_path . $path, '/') . $f)  ->method('DELETE')->defaults(['controller' => $controller, 'action' => 'destroy']);
-    $_show    && Route::set($prefix_name . $as,               rtrim($prefix_path . $path, '/') . $f)  ->method('GET')->defaults(['controller' => $controller, 'action' => 'show']);
+    $_create  && Route::set('create_' . $prefix_name . $as,   rtrim($prefix_path . $path, '/') . $f, $regex)->method('POST')->defaults(['controller' => $controller, 'action' => 'create']);
+    $_update  && Route::set('update_' . $prefix_name . $as,   rtrim($prefix_path . $path, '/') . $f, $regex)->method(['PUT', 'PATCH'])->defaults(['controller' => $controller, 'action' => 'update']);
+    $_destroy && Route::set('destroy_' . $prefix_name . $as,  rtrim($prefix_path . $path, '/') . $f, $regex)->method('DELETE')->defaults(['controller' => $controller, 'action' => 'destroy']);
+    $_show    && Route::set($prefix_name . $as,               rtrim($prefix_path . $path, '/') . $f, $regex)->method('GET')->defaults(['controller' => $controller, 'action' => 'show']);
   }
 
 
@@ -298,10 +304,11 @@ class Advanced_Route extends Kohana_Route {
 
     $controller = static::$controller_stack[0];
     $directory = static::$directory_stack[0];
+    $regex = static::$regex_stack[0];
 
-    Route::set(trim($action . '_' . $prefix_name, '_'), rtrim($prefix_path, '/') . '/' . $action . $f)->method('GET')->defaults(['directory' => $directory, 'controller' => $controller, 'action' => $action]);
+    Route::set(trim($action . '_' . $prefix_name, '_'), rtrim($prefix_path, '/') . '/' . $action . $f, $regex)->method('GET')->defaults(['directory' => $directory, 'controller' => $controller, 'action' => $action]);
 
-    $_new && Route::set(trim($action . '_new_' . $prefix_name, '_'), rtrim($new_prefix_path, '/') . '/' . $action . $f)->method('GET')->defaults(['directory' => $directory, 'controller' => $controller, 'action' => $action]);
+    $_new && Route::set(trim($action . '_new_' . $prefix_name, '_'), rtrim($new_prefix_path, '/') . '/' . $action . $f, $regex)->method('GET')->defaults(['directory' => $directory, 'controller' => $controller, 'action' => $action]);
   }
 
 
@@ -328,10 +335,11 @@ class Advanced_Route extends Kohana_Route {
 
     $controller = static::$controller_stack[0];
     $directory = static::$directory_stack[0];
+    $regex = static::$regex_stack[0];
 
     $prefix_path = preg_replace('#<\w+>/$#', '', $prefix_path);
 
-    Route::set(Inflector::plural(trim($action . '_' . $prefix_name, '_')), rtrim($prefix_path, '/') . '/' . $action . $f)->method('GET')->defaults(['directory' => $directory, 'controller' => $controller, 'action' => $action]);
+    Route::set(Inflector::plural(trim($action . '_' . $prefix_name, '_')), rtrim($prefix_path, '/') . '/' . $action . $f, $regex)->method('GET')->defaults(['directory' => $directory, 'controller' => $controller, 'action' => $action]);
   }
 
 
